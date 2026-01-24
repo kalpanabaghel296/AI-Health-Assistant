@@ -176,22 +176,51 @@ export async function registerRoutes(
       res.json(updated);
   });
 
-  // Chatbot
+  // Chatbot - using OpenAI integration
   app.post(api.chat.send.path, requireAuth, async (req, res) => {
       const { message } = req.body;
-      // Mock AI response for now to ensure speed, or use OpenAI if key available
-      // Ideally use the OpenAI integration here.
-      // Since we added the integration, let's use it if we can, or just mock for MVP robustness
-      // We'll mock specific health responses
+      const userId = (req.session as any).userId;
+      const user = await storage.getUser(userId);
       
-      let reply = "I'm your AI Health Assistant. How can I help you today?";
-      if (message.toLowerCase().includes("headache")) {
-          reply = "I'm sorry to hear that. Make sure you are hydrated and in a quiet environment. If it's severe, please see a doctor.";
-      } else if (message.toLowerCase().includes("diet")) {
-          reply = "A balanced diet rich in vegetables, fruits, and lean proteins is essential for good health.";
+      try {
+          const OpenAI = (await import("openai")).default;
+          const openai = new OpenAI({
+              apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+              baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+          });
+          
+          const systemPrompt = `You are a preventive healthcare assistant. Your role is to provide helpful, accurate, and supportive health guidance.
+
+RULES:
+- Answer ONLY what is asked. Be brief, concise, and to-the-point.
+- Be supportive and actionable in your responses.
+- NEVER diagnose medical conditions or prescribe medications.
+- For serious symptoms, always recommend consulting a healthcare professional.
+- Focus on preventive care: sleep, exercise, nutrition, hydration, stress management.
+- Keep responses under 3 sentences unless more detail is specifically requested.
+
+User context:
+- Age: ${user?.age || "unknown"}
+- Physical Health Score: ${user?.physicalScore || 50}/100
+- Mental Wellness Score: ${user?.mentalScore || 50}/100
+- Lifestyle: ${user?.lifestyle || "not specified"}`;
+
+          const completion = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: message }
+              ],
+              max_completion_tokens: 300,
+          });
+          
+          const reply = completion.choices[0]?.message?.content || "I'm here to help with your health questions. Could you please rephrase that?";
+          res.json({ reply });
+      } catch (error) {
+          console.error("Chat error:", error);
+          // Fallback response if AI fails
+          res.json({ reply: "I'm your health assistant. For specific medical concerns, please consult a healthcare professional. How else can I help with general wellness tips?" });
       }
-      
-      res.json({ reply });
   });
 
   return httpServer;

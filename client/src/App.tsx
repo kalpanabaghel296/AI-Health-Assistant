@@ -10,10 +10,12 @@ import { Loader2 } from "lucide-react";
 // Pages
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
+import Questionnaire from "@/pages/Questionnaire";
 import Dashboard from "@/pages/Dashboard";
 import Symptoms from "@/pages/Symptoms";
 import Reminders from "@/pages/Reminders";
 import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
@@ -56,6 +58,9 @@ function Router() {
       <Route path="/onboarding">
         <ProtectedRoute component={Onboarding} />
       </Route>
+      <Route path="/questionnaire">
+        <ProtectedRoute component={Questionnaire} />
+      </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={Dashboard} />
       </Route>
@@ -67,6 +72,9 @@ function Router() {
       </Route>
       <Route path="/profile">
         <ProtectedRoute component={Profile} />
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute component={Settings} />
       </Route>
       <Route component={NotFound} />
     </Switch>

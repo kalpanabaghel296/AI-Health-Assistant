@@ -50,15 +50,9 @@ export default function Onboarding() {
       await updateProfile.mutateAsync({
         ...data,
         bmi,
-        // Default questionnaires can be expanded in v2
-        questionnaire: {
-          sleepDuration: 7,
-          activityFreq: "moderate",
-          diet: "balanced",
-          stressLevel: 5
-        }
       });
-      setLocation("/dashboard");
+      // Redirect to health questionnaire after profile setup
+      setLocation("/questionnaire");
     } catch (error) {
       console.error(error);
     }

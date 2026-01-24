@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Stethoscope, Bell, User as UserIcon, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, Stethoscope, Bell, User as UserIcon, LogOut, Activity, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ export function Sidebar() {
     { href: "/symptoms", icon: Stethoscope, label: "Symptoms" },
     { href: "/reminders", icon: Bell, label: "Reminders" },
     { href: "/profile", icon: UserIcon, label: "Profile" },
+    { href: "/settings", icon: Settings, label: "Settings" },
   ];
 
   return (
@@ -63,7 +64,7 @@ export function MobileNav() {
     { href: "/dashboard", icon: LayoutDashboard },
     { href: "/symptoms", icon: Stethoscope },
     { href: "/reminders", icon: Bell },
-    { href: "/profile", icon: UserIcon },
+    { href: "/settings", icon: Settings },
   ];
 
   return (

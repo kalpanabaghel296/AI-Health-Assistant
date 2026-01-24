@@ -68,9 +68,11 @@ export function useAuth() {
       queryClient.setQueryData([api.auth.me.path], data.user);
       toast({ title: "Welcome back!", description: "Wallet connected successfully." });
       
-      // Redirect based on profile completion
+      // Redirect based on profile and questionnaire completion
       if (!data.user.name || !data.user.age) {
         setLocation("/onboarding");
+      } else if (!data.user.questionnaire) {
+        setLocation("/questionnaire");
       } else {
         setLocation("/dashboard");
       }

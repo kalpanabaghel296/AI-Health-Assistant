@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-  /* Medical/Calming Palette - Teal & Clean White */
+  /* Medical/Calming Wellness Palette - Teal & Clean White */
   --background: 210 40% 98%; /* Very light blueish gray */
   --foreground: 222 47% 11%;
   
@@ -24,6 +24,14 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --card-border: 214 32% 91%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 214 32% 91%;
+
   --border: 214 32% 91%;
   --input: 214 32% 91%;
   --ring: 176 60% 38%;
@@ -32,6 +40,7 @@
 
   --font-sans: 'DM Sans', sans-serif;
   --font-display: 'Outfit', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
 }
 
 .dark {
@@ -50,11 +59,19 @@
   --accent: 176 50% 50%;
   --accent-foreground: 210 40% 98%;
   
-  --destructive: 0 62% 30%;
+  --destructive: 0 62% 50%;
   --destructive-foreground: 210 40% 98%;
+
+  --card: 217 33% 14%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 217 33% 20%;
   
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
+  --popover: 217 33% 14%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 217 33% 20%;
+  
+  --border: 217 33% 20%;
+  --input: 217 33% 20%;
   --ring: 176 50% 50%;
 }
 
