@@ -1,0 +1,178 @@
+Build a production-ready Web3 AI Health & Fitness Assistant web application.
+
+Authentication & Web3
+
+Wallet-based authentication using MetaMask
+
+Enforce Monad Testnet (prompt user to switch if incorrect)
+
+Wallet address = user identity
+
+No email/password authentication
+
+Data & Privacy
+
+Encrypt all health, lifestyle, questionnaire, and reminder data
+
+Store data off-chain (IPFS or secure storage)
+
+Store only hashes and access permissions on-chain
+
+Do NOT store raw health data or images on blockchain
+
+Application Structure
+Screens
+
+Splash screen
+
+Wallet connect
+
+Profile setup + initial health & lifestyle questionnaire
+
+Main app with bottom navigation (3 tabs)
+
+Profile Setup & Initial Questionnaire
+
+Collect:
+
+Name, age, gender
+
+Height, weight → auto BMI
+
+Profile photo
+
+Lifestyle category (student / corporate / other)
+
+Lifestyle & Health MCQs:
+
+Average sleep duration & quality
+
+Physical activity frequency
+
+Exercise type
+
+Food habits
+
+Water intake
+
+Screen time
+
+Stress level
+
+Mood & mental well-being indicators
+
+Use responses to compute:
+
+Physical Health Score
+
+Mental Wellness Score
+
+Dashboard Tab
+
+Display profile summary (name, age, gender, height, weight, BMI, lifestyle, photo)
+
+Show:
+
+Overall Health Score (0–100%)
+
+Physical Health Score
+
+Mental Wellness Score
+
+Personalized health & lifestyle recommendations
+
+Daily health tasks (steps, water intake, sleep, exercise)
+
+Task completion tracking
+
+Streaks / heatmap visualization
+
+Hamburger menu (settings, edit profile, logout)
+
+Health scores must be derived from BMI, questionnaire responses, symptom risk, and daily task completion.
+
+Symptom Tracker Tab
+
+Input symptoms
+
+Severity scale (1–10)
+
+Duration (days)
+
+AI identifies possible health risks (not diagnosis)
+
+Update health scores and recommendations
+
+Display clear medical disclaimer
+
+Reminders Tab (Medicine & Doctor)
+
+Add medicine name, dosage, date, and time
+
+Add doctor appointment reminders
+
+Display reminders sorted chronologically by date and time
+
+Example: “4:00 AM – 17 July” appears before “6:00 AM – 17 July”
+
+Highlight upcoming vs completed reminders
+
+Mark reminders as taken / missed / completed
+
+Global AI Health Chatbot
+
+Floating chat bubble accessible on all screens
+
+Conversational health and fitness guidance
+
+Explains physical and mental health scores
+
+Personalized advice based on lifestyle, habits, and symptoms
+
+Image upload for affected body area
+
+Provide general guidance and precautions only
+
+No diagnosis or prescriptions
+
+Images processed temporarily, not stored
+
+Friendly, supportive tone with safety disclaimers
+
+AI Capabilities
+
+Lifestyle & questionnaire analysis
+
+Physical and mental health scoring
+
+Symptom risk analysis
+
+Personalized health recommendations
+
+Image-based general health guidance
+
+UI / UX Design Requirements
+
+Patient-friendly, well-being focused design
+
+Default light theme with calm, soothing colors
+
+Optional dark mode for accessibility
+
+User-controlled toggle to switch between light and dark themes
+
+Smooth theme conversion without UI breakage
+
+Clean, card-based layout
+
+Intuitive navigation and soft animations
+
+Constraints
+
+Preventive healthcare focus only
+
+Privacy-first architecture
+
+Production-ready, end-to-end functional implementation
+
+Deliver a complete, working application with frontend, backend logic, AI integration, and Web3 wallet flow.
