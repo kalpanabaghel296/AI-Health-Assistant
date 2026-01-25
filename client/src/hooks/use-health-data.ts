@@ -154,3 +154,57 @@ export function useChat() {
     }
   });
 }
+
+// --- IMAGE ANALYSIS ---
+export function useImageAnalysis() {
+  return useMutation({
+    mutationFn: async ({ image, context }: { image: string; context?: string }) => {
+      const res = await fetch(api.chat.analyzeImage.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image, context }),
+      });
+      if (!res.ok) throw new Error("Failed to analyze image");
+      return api.chat.analyzeImage.responses[200].parse(await res.json());
+    }
+  });
+}
+
+// --- POINTS ---
+export function usePoints() {
+  return useQuery({
+    queryKey: [api.points.get.path],
+    queryFn: async () => {
+      const res = await fetch(api.points.get.path);
+      if (!res.ok) throw new Error("Failed to fetch points");
+      return api.points.get.responses[200].parse(await res.json());
+    },
+  });
+}
+
+export function useAddReferral() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (referralCode: string) => {
+      const res = await fetch(api.points.addReferral.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referralCode }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to add referral");
+      }
+      return api.points.addReferral.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.points.get.path] });
+      toast({ title: "Referral Applied!", description: "100 bonus points added." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+}

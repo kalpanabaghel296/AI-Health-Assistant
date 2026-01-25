@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { GlobalAIChat } from "@/components/GlobalAIChat";
+import { ReminderAlarm } from "@/components/ReminderAlarm";
 
 // Pages
 import Login from "@/pages/Login";
@@ -82,11 +84,15 @@ function Router() {
 }
 
 function App() {
+  const { user } = useAuth();
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Router />
+        {user && <GlobalAIChat />}
+        {user && <ReminderAlarm />}
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -176,7 +176,7 @@ export async function registerRoutes(
       res.json(updated);
   });
 
-  // Chatbot - using OpenAI integration
+  // Chatbot - using OpenAI integration with precision upgrade
   app.post(api.chat.send.path, requireAuth, async (req, res) => {
       const { message } = req.body;
       const userId = (req.session as any).userId;
@@ -189,21 +189,28 @@ export async function registerRoutes(
               baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
           });
           
-          const systemPrompt = `You are a preventive healthcare assistant. Your role is to provide helpful, accurate, and supportive health guidance.
+          const systemPrompt = `You are a precise preventive healthcare assistant.
 
-RULES:
-- Answer ONLY what is asked. Be brief, concise, and to-the-point.
-- Be supportive and actionable in your responses.
-- NEVER diagnose medical conditions or prescribe medications.
-- For serious symptoms, always recommend consulting a healthcare professional.
-- Focus on preventive care: sleep, exercise, nutrition, hydration, stress management.
-- Keep responses under 3 sentences unless more detail is specifically requested.
+RESPONSE STRUCTURE:
+1. DIRECT ANSWER to the main problem first (1-2 sentences max)
+2. Secondary guidance ONLY if directly relevant
+3. End with "Consult a doctor if symptoms persist" ONLY for concerning symptoms
 
-User context:
-- Age: ${user?.age || "unknown"}
-- Physical Health Score: ${user?.physicalScore || 50}/100
-- Mental Wellness Score: ${user?.mentalScore || 50}/100
-- Lifestyle: ${user?.lifestyle || "not specified"}`;
+STRICT RULES:
+- Problem-first approach: Address the core issue immediately
+- NO generic wellness advice unless specifically asked
+- NO obvious statements ("drink water", "get rest") unless directly relevant
+- NEVER diagnose or prescribe medications
+- Keep total response under 50 words unless complex question
+- Be warm but efficient
+
+USER MEDICAL CONTEXT:
+- Age: ${user?.age || "unknown"}, Gender: ${user?.gender || "unknown"}
+- Health Scores: Physical ${user?.physicalScore || 50}/100, Mental ${user?.mentalScore || 50}/100
+- Lifestyle: ${user?.lifestyle || "not specified"}
+- Known Allergies: ${user?.allergies || "none reported"}
+- Past Conditions: ${user?.pastDiseases || "none reported"}
+- Current Conditions: ${user?.currentConditions || "none reported"}`;
 
           const completion = await openai.chat.completions.create({
               model: "gpt-4o-mini",
@@ -211,16 +218,107 @@ User context:
                   { role: "system", content: systemPrompt },
                   { role: "user", content: message }
               ],
-              max_completion_tokens: 300,
+              max_completion_tokens: 200,
           });
           
-          const reply = completion.choices[0]?.message?.content || "I'm here to help with your health questions. Could you please rephrase that?";
+          const reply = completion.choices[0]?.message?.content || "Could you describe your concern more specifically?";
           res.json({ reply });
       } catch (error) {
           console.error("Chat error:", error);
-          // Fallback response if AI fails
-          res.json({ reply: "I'm your health assistant. For specific medical concerns, please consult a healthcare professional. How else can I help with general wellness tips?" });
+          res.json({ reply: "Please describe your health concern and I'll provide focused guidance." });
       }
+  });
+
+  // Image Analysis endpoint
+  app.post(api.chat.analyzeImage.path, requireAuth, async (req, res) => {
+      const { image, context } = req.body;
+      const userId = (req.session as any).userId;
+      const user = await storage.getUser(userId);
+      
+      try {
+          const OpenAI = (await import("openai")).default;
+          const openai = new OpenAI({
+              apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+              baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+          });
+          
+          const systemPrompt = `You are a medical image analysis assistant for preliminary health guidance only.
+
+RESPONSE FORMAT:
+1. **Observation**: Brief description of what you see (1 sentence)
+2. **Possible Condition**: Most likely explanation (1 sentence)
+3. **Recommended Action**: What the user should do next (1 sentence)
+
+DISCLAIMER (always include):
+"This is NOT a medical diagnosis. Please consult a healthcare professional for accurate evaluation."
+
+RULES:
+- Be observational, not diagnostic
+- Focus on visible symptoms only
+- Suggest professional consultation for anything concerning
+- Consider user context: Age ${user?.age || "unknown"}, Allergies: ${user?.allergies || "none known"}`;
+
+          const completion = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                  { role: "system", content: systemPrompt },
+                  { 
+                      role: "user", 
+                      content: [
+                          { type: "text", text: context || "Please analyze this image for any health concerns." },
+                          { type: "image_url", image_url: { url: image } }
+                      ]
+                  }
+              ],
+              max_completion_tokens: 300,
+          });
+          
+          const analysis = completion.choices[0]?.message?.content || "Unable to analyze this image. Please try with a clearer photo.";
+          res.json({ analysis });
+      } catch (error) {
+          console.error("Image analysis error:", error);
+          res.json({ analysis: "Image analysis is temporarily unavailable. Please describe your concern in text instead.\n\nDisclaimer: This is NOT a medical diagnosis." });
+      }
+  });
+
+  // Points system endpoints
+  app.get(api.points.get.path, requireAuth, async (req, res) => {
+      const userId = (req.session as any).userId;
+      const user = await storage.getUser(userId);
+      
+      const points = user?.points || 0;
+      const streak = user?.currentStreak || 0;
+      const canRedeem = points >= 10000;
+      const redeemValue = Math.floor(points / 1000) * 10; // 1000 points = ₹10
+      
+      res.json({ points, streak, canRedeem, redeemValue });
+  });
+
+  app.post(api.points.addReferral.path, requireAuth, async (req, res) => {
+      const { referralCode } = req.body;
+      const userId = (req.session as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (user?.referredBy) {
+          return res.status(400).json({ message: "You have already used a referral code" });
+      }
+      
+      const referrer = await storage.getUserByReferralCode(referralCode);
+      if (!referrer) {
+          return res.status(400).json({ message: "Invalid referral code" });
+      }
+      
+      if (referrer.id === userId) {
+          return res.status(400).json({ message: "Cannot use your own referral code" });
+      }
+      
+      // Add 100 points to both users
+      await storage.addPoints(userId, 100);
+      await storage.addPoints(referrer.id, 100);
+      await storage.updateUserProfile(userId, { referredBy: referralCode });
+      
+      const updatedUser = await storage.getUser(userId);
+      res.json({ success: true, points: updatedUser?.points || 0 });
   });
 
   return httpServer;

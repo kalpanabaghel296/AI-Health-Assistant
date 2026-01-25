@@ -16,10 +16,22 @@ export const users = pgTable("users", {
   bmi: integer("bmi"), // Calculated
   lifestyle: text("lifestyle"), // student, corporate, other
   
+  // Medical History
+  pastDiseases: text("past_diseases"),
+  allergies: text("allergies"),
+  currentConditions: text("current_conditions"),
+  
   // Scores (0-100)
   physicalScore: integer("physical_score").default(0),
   mentalScore: integer("mental_score").default(0),
   overallScore: integer("overall_score").default(0),
+  
+  // Points & Rewards
+  points: integer("points").default(0),
+  currentStreak: integer("current_streak").default(0),
+  lastTaskDate: text("last_task_date"),
+  referralCode: text("referral_code"),
+  referredBy: text("referred_by"),
   
   // Questionnaire Responses (stored as JSON)
   questionnaire: jsonb("questionnaire").$type<{

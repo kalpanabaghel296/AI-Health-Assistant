@@ -122,6 +122,37 @@ export const api = {
         200: z.object({ reply: z.string() }),
       },
     },
+    analyzeImage: {
+      method: "POST" as const,
+      path: "/api/chat/analyze-image",
+      input: z.object({ image: z.string(), context: z.string().optional() }),
+      responses: {
+        200: z.object({ analysis: z.string() }),
+      },
+    },
+  },
+  points: {
+    get: {
+      method: "GET" as const,
+      path: "/api/points",
+      responses: {
+        200: z.object({ 
+          points: z.number(), 
+          streak: z.number(), 
+          canRedeem: z.boolean(),
+          redeemValue: z.number() 
+        }),
+      },
+    },
+    addReferral: {
+      method: "POST" as const,
+      path: "/api/points/referral",
+      input: z.object({ referralCode: z.string() }),
+      responses: {
+        200: z.object({ success: z.boolean(), points: z.number() }),
+        400: z.object({ message: z.string() }),
+      },
+    },
   },
 };
 
