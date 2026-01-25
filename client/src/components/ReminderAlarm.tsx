@@ -1,91 +1,118 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useReminders } from "@/hooks/use-health-data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Bell, X } from "lucide-react";
+import { Bell, X, Pill, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface AlarmData {
+  id: number;
+  title: string;
+  dosage?: string | null;
+  type: string;
+}
 
 export function ReminderAlarm() {
   const { data: reminders } = useReminders();
   const { toast } = useToast();
-  const [activeAlarm, setActiveAlarm] = useState<{ title: string; dosage?: string | null } | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [activeAlarm, setActiveAlarm] = useState<AlarmData | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const checkedReminders = useRef<Set<number>>(new Set());
+  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (!reminders) return;
-
-    const checkReminders = () => {
-      const now = new Date();
-      
-      reminders.forEach((reminder) => {
-        if (reminder.completed || checkedReminders.current.has(reminder.id)) return;
-        
-        const reminderTime = new Date(reminder.datetime);
-        const timeDiff = Math.abs(now.getTime() - reminderTime.getTime());
-        
-        if (timeDiff < 60000) {
-          checkedReminders.current.add(reminder.id);
-          setActiveAlarm({ title: reminder.title, dosage: reminder.dosage });
-          playAlarm();
-          
-          toast({
-            title: `Reminder: ${reminder.title}`,
-            description: reminder.dosage ? `Dosage: ${reminder.dosage}` : undefined,
-          });
-        }
-      });
-    };
-
-    checkReminders();
-    const interval = setInterval(checkReminders, 30000);
-    return () => clearInterval(interval);
-  }, [reminders, toast]);
-
-  const playAlarm = () => {
+  const playAlarm = useCallback(() => {
     try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.src = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU" + 
-          "JvT19" + "A".repeat(1000);
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const ctx = audioContextRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.frequency.value = freq;
+        oscillator.type = "sine";
+        
+        gainNode.gain.setValueAtTime(0.25, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
       
-      oscillator.frequency.value = 800;
-      oscillator.type = "sine";
+      const now = ctx.currentTime;
+      playTone(523, now, 0.3);
+      playTone(659, now + 0.15, 0.3);
+      playTone(784, now + 0.3, 0.4);
       
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 1);
-      
-      setTimeout(() => {
-        const oscillator2 = audioContext.createOscillator();
-        const gainNode2 = audioContext.createGain();
-        oscillator2.connect(gainNode2);
-        gainNode2.connect(audioContext.destination);
-        oscillator2.frequency.value = 1000;
-        oscillator2.type = "sine";
-        gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-        oscillator2.start(audioContext.currentTime);
-        oscillator2.stop(audioContext.currentTime + 1);
-      }, 300);
     } catch (e) {
       console.log("Audio playback not available");
     }
-  };
+  }, []);
+
+  const checkReminders = useCallback(() => {
+    if (!reminders) return;
+    
+    const now = new Date();
+    
+    reminders.forEach((reminder) => {
+      if (reminder.completed || checkedReminders.current.has(reminder.id)) return;
+      
+      const reminderTime = new Date(reminder.datetime);
+      const timeDiff = now.getTime() - reminderTime.getTime();
+      
+      if (timeDiff >= 0 && timeDiff < 60000) {
+        checkedReminders.current.add(reminder.id);
+        
+        setActiveAlarm({ 
+          id: reminder.id,
+          title: reminder.title, 
+          dosage: reminder.dosage,
+          type: reminder.type
+        });
+        
+        playAlarm();
+        
+        const icon = reminder.type === 'medicine' ? 'Medicine' : 'Appointment';
+        toast({
+          title: `${icon} Reminder`,
+          description: `${reminder.title}${reminder.dosage ? ` - ${reminder.dosage}` : ''}`,
+        });
+      }
+    });
+  }, [reminders, toast, playAlarm]);
+
+  useEffect(() => {
+    checkReminders();
+    
+    const interval = setInterval(checkReminders, 10000);
+    
+    return () => {
+      clearInterval(interval);
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+      }
+    };
+  }, [checkReminders]);
 
   const dismissAlarm = () => {
     setActiveAlarm(null);
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
   };
+
+  const AlarmIcon = activeAlarm?.type === 'medicine' ? Pill : 
+                    activeAlarm?.type === 'appointment' ? Calendar : Bell;
 
   return (
     <AnimatePresence>
@@ -94,22 +121,27 @@ export function ReminderAlarm() {
           initial={{ opacity: 0, y: -50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-primary text-primary-foreground px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px]"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-primary text-primary-foreground px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[300px] max-w-[90vw]"
+          data-testid="reminder-alarm-modal"
         >
           <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-            <Bell className="w-6 h-6" />
+            <AlarmIcon className="w-6 h-6" />
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-lg">{activeAlarm.title}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs uppercase tracking-wider opacity-75 mb-1">
+              {activeAlarm.type === 'medicine' ? 'Medicine Reminder' : 'Appointment'}
+            </p>
+            <p className="font-bold text-lg truncate">{activeAlarm.title}</p>
             {activeAlarm.dosage && (
-              <p className="text-sm opacity-90">Dosage: {activeAlarm.dosage}</p>
+              <p className="text-sm opacity-90 truncate">Dosage: {activeAlarm.dosage}</p>
             )}
           </div>
           <Button
             size="icon"
             variant="ghost"
             onClick={dismissAlarm}
-            className="text-primary-foreground hover:bg-white/20"
+            className="text-primary-foreground hover:bg-white/20 shrink-0"
+            data-testid="button-dismiss-alarm"
           >
             <X className="w-5 h-5" />
           </Button>

@@ -133,7 +133,63 @@ export async function registerRoutes(
   });
 
   app.patch(api.tasks.update.path, requireAuth, async (req, res) => {
-      const updated = await storage.updateTask(parseInt(req.params.id), req.body);
+      const taskId = parseInt(req.params.id);
+      const userId = (req.session as any).userId;
+      const updates = req.body;
+      
+      // Get current task state before update
+      const tasks = await storage.getDailyTasks(userId, new Date().toISOString().split('T')[0]);
+      const currentTask = tasks.find(t => t.id === taskId);
+      
+      const updated = await storage.updateTask(taskId, updates);
+      
+      // Award points if task was just completed (wasn't completed before, now is)
+      if (updates.completed === true && currentTask && !currentTask.completed) {
+          const user = await storage.getUser(userId);
+          const today = new Date().toISOString().split('T')[0];
+          
+          // Add 10 points for task completion
+          await storage.addPoints(userId, 10);
+          
+          // Check streak logic
+          const lastTaskDate = user?.lastTaskDate;
+          let newStreak = user?.currentStreak || 0;
+          
+          if (!lastTaskDate) {
+              newStreak = 1;
+          } else {
+              const lastDate = new Date(lastTaskDate);
+              const todayDate = new Date(today);
+              const diffTime = todayDate.getTime() - lastDate.getTime();
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              
+              if (diffDays === 1) {
+                  newStreak += 1;
+              } else if (diffDays > 1) {
+                  newStreak = 1; // Reset streak
+              }
+              // Same day = keep current streak
+          }
+          
+          // Check for streak bonuses
+          let bonusPoints = 0;
+          if (newStreak === 7) {
+              bonusPoints = 50; // 7-day streak bonus
+          } else if (newStreak === 30 || (newStreak > 0 && newStreak % 30 === 0)) {
+              bonusPoints = 100; // 30-day streak bonus
+          }
+          
+          if (bonusPoints > 0) {
+              await storage.addPoints(userId, bonusPoints);
+          }
+          
+          // Update user's streak and last task date
+          await storage.updateUserProfile(userId, { 
+              currentStreak: newStreak, 
+              lastTaskDate: today 
+          });
+      }
+      
       res.json(updated);
   });
 

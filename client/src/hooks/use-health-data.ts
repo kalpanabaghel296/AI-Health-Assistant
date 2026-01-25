@@ -37,6 +37,8 @@ export function useGenerateTasks() {
 
 export function useUpdateTask() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   return useMutation({
     mutationFn: async ({ id, updates }: { id: number, updates: Partial<Task> }) => {
       const url = buildUrl(api.tasks.update.path, { id });
@@ -50,7 +52,20 @@ export function useUpdateTask() {
     },
     onSuccess: (updatedTask) => {
       const dateStr = updatedTask.date;
+      // Invalidate tasks query
       queryClient.invalidateQueries({ queryKey: [api.tasks.list.path, dateStr] });
+      // Invalidate points query to refresh points immediately
+      queryClient.invalidateQueries({ queryKey: [api.points.get.path] });
+      // Invalidate auth/me to refresh user data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      
+      // Show toast if task was completed
+      if (updatedTask.completed) {
+        toast({ 
+          title: "+10 Points!", 
+          description: "Task completed. Keep up the streak!" 
+        });
+      }
     }
   });
 }

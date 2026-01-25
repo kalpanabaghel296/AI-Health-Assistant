@@ -1,0 +1,99 @@
+IMPORTANT:
+This project already has a working codebase and UI.
+Only EXTEND and FIX existing logic.
+Do NOT rebuild, restructure, or redesign the app.
+Preserve all current routing, UI, and data models.
+
+1. Fix Reward Points Update Issue (Critical)
+
+Problem:
+
+When a user completes Daily Goals, points are not reflected immediately in the Profile/Dashboard.
+
+Required Fix:
+
+Ensure reward points update instantly when:
+
+A daily goal/task is marked completed
+
+Points logic:
+
+Each completed daily task = +10 points
+
+Use a single source of truth for points (user state or global store).
+
+Sync reward updates across:
+
+Daily Goals
+
+Dashboard
+
+Profile section
+
+Ensure UI re-renders immediately after point updates (no refresh required).
+
+2. Improve Reward State Management
+
+Centralize reward/points state:
+
+Avoid duplicate calculations in multiple components.
+
+Persist points per user session.
+
+Prevent duplicate rewards for the same task/day.
+
+Ensure reward state remains consistent across navigation.
+
+3. Add Alarm Sound for Medicine & Appointment Reminders
+
+Required Behavior:
+
+When reminder time is reached:
+
+Play an audible alarm sound
+
+Show visual notification (toast or modal)
+
+Alarm must trigger:
+
+Even if the user is on another screen inside the app
+
+Alarm sound should:
+
+Be patient-friendly (soft but noticeable)
+
+Auto-stop after user acknowledges reminder
+
+Implementation Guidance:
+
+Use browser-supported audio APIs.
+
+Use a background timer or interval to check reminder times.
+
+Ensure alarm works for:
+
+Medicine reminders
+
+Doctor appointment reminders
+
+4. Safety & UX Constraints
+
+Do NOT block the UI with alerts.
+
+Do NOT play alarm repeatedly once acknowledged.
+
+Maintain existing UI theme and accessibility.
+
+Keep logic efficient and lightweight.
+
+Expected Outcome
+
+Completing a daily goal instantly increases reward points.
+
+Updated points appear immediately on Profile and Dashboard.
+
+Reminder alarms play exactly at scheduled time.
+
+No regression in existing features.
+
+Apply fixes carefully and ensure the app remains stable and user-friendly.
