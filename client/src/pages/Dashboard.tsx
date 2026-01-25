@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SmartAvatar } from "@/components/SmartAvatar";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -104,11 +104,7 @@ export default function Dashboard() {
 
       <Card className="p-6 rounded-2xl mb-8 border-border/60">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <Avatar className="w-20 h-20 text-2xl">
-            <AvatarFallback className="bg-primary/10 text-primary font-display">
-              {getInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
+          <SmartAvatar user={user} size="lg" />
           
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="space-y-1">

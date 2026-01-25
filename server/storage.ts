@@ -6,13 +6,15 @@ export interface IStorage {
   // User & Auth
   getUserByAddress(walletAddress: string): Promise<User | undefined>;
   getUser(id: number): Promise<User | undefined>;
+  getUserByReferralCode(code: string): Promise<User | undefined>;
   createUser(user: InsertUser & { nonce: string }): Promise<User>;
   updateUserNonce(id: number, nonce: string): Promise<User>;
   updateUserProfile(id: number, profile: Partial<InsertUser>): Promise<User>;
+  addPoints(userId: number, points: number): Promise<void>;
   
   // Tasks
   getDailyTasks(userId: number, date: string): Promise<Task[]>;
-  createTask(task: InsertUser & { userId: number }): Promise<Task>; // Fix type
+  createTask(task: InsertUser & { userId: number }): Promise<Task>;
   createTaskActual(task: any): Promise<Task>;
   updateTask(id: number, updates: Partial<Task>): Promise<Task>;
 
@@ -50,6 +52,18 @@ export class DatabaseStorage implements IStorage {
   async updateUserProfile(id: number, profile: Partial<InsertUser>): Promise<User> {
     const [updated] = await db.update(users).set(profile).where(eq(users.id, id)).returning();
     return updated;
+  }
+
+  async getUserByReferralCode(code: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.referralCode, code));
+    return user;
+  }
+
+  async addPoints(userId: number, points: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (user) {
+      await db.update(users).set({ points: (user.points || 0) + points }).where(eq(users.id, userId));
+    }
   }
 
   async getDailyTasks(userId: number, date: string): Promise<Task[]> {

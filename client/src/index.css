@@ -80,12 +80,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply tracking-tight font-bold text-foreground;
+  }
+  
+  /* Text selection visibility fix - high contrast in both modes */
+  ::selection {
+    @apply bg-primary/30 text-foreground;
+  }
+  
+  .dark ::selection {
+    background-color: hsl(176 50% 50% / 0.4);
+    color: hsl(210 40% 98%);
+  }
+  
+  /* Ensure text selection is visible in all contexts */
+  *::selection {
+    background-color: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
   }
 }
 

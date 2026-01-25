@@ -83,16 +83,24 @@ function Router() {
   );
 }
 
-function App() {
+function GlobalComponents() {
   const { user } = useAuth();
   
+  return (
+    <>
+      {user && <GlobalAIChat />}
+      {user && <ReminderAlarm />}
+    </>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Router />
-        {user && <GlobalAIChat />}
-        {user && <ReminderAlarm />}
+        <GlobalComponents />
       </TooltipProvider>
     </QueryClientProvider>
   );
